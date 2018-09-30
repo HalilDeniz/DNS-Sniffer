@@ -3,7 +3,7 @@
 from scapy.all import DNSQR, DNSRR, UDP, IP, DNS, sniff
 from datetime import datetime
 
-INTERFACE = "eth0" # interface that sniffs
+INTERFACE = "eth0" # change to your sniffing interface
 # number of sniffed queries, don't forget that for every query there is a response. Uncomment if you want to specify the number of DNS packets
 # NUMBER_QUERIES = 10
 
