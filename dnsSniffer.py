@@ -1,26 +1,42 @@
 #!/usr/bin/python
 
+import argparse
 from scapy.all import DNSQR, DNSRR, UDP, IP, DNS, sniff
 from datetime import datetime
+from colorama import Fore, Style, init
 
-INTERFACE = "eth0" # change to your sniffing interface
-# number of sniffed queries, don't forget that for every query there is a response. Uncomment if you want to specify the number of DNS packets
-# NUMBER_QUERIES = 10
+# Initialize colorama
+init(autoreset=True)
 
-def grep_DNS_queries(packet):
-	packet_time = packet.sprintf('%sent.time%')
+class DNSSniffer:
+    def __init__(self, interface):
+        self.interface = interface
 
-	try:
-		if DNSQR in packet and packet.dport == 53:
-			
-			print packet[DNS].summary() + '\n[' + packet[IP].src + '] -> [' + packet[IP].dst + '] at [' + packet_time + ']'
+    def grep_DNS_queries(self, packet):
+        packet_time = packet.sprintf('%sent.time%')
 
-		elif DNSRR in packet and packet.sport == 53:
-			
-			print packet[DNS].summary() + '\n['+ packet[IP].src + '] -> [' + packet[IP].dst + '] at [' + packet_time + ']'
+        try:
+            if DNSQR in packet and packet.dport == 53:
+                print(Fore.YELLOW + packet[DNS].summary() + '\n[' + Fore.GREEN + packet[IP].src + Style.RESET_ALL + '] -> [' + Fore.RED + packet[IP].dst + Style.RESET_ALL + '] at [' + packet_time + ']')
 
-	except:
-		pass
-			
-# sniffs the packets
-packets = sniff(iface = INTERFACE, filter = "udp and port 53", store = 0, prn = grep_DNS_queries)#, count = NUMBER_QUERIES)
+            elif DNSRR in packet and packet.sport == 53:
+                print(Fore.CYAN + packet[DNS].summary() + '\n['+ Fore.BLUE + packet[IP].src + Style.RESET_ALL + '] -> [' + Fore.MAGENTA + packet[IP].dst + Style.RESET_ALL + '] at [' + packet_time + ']')
+
+        except Exception as e:
+            print(Fore.RED + "Error processing packet: " + str(e))
+
+    def start_sniffing(self):
+        print(Fore.GREEN + f"Sniffing on interface {self.interface} for DNS traffic...")
+        sniff(iface=self.interface, filter="udp and port 53", store=0, prn=self.grep_DNS_queries)
+
+if __name__ == "__main__":
+    # Set up argparse to get the interface from the user
+    parser = argparse.ArgumentParser(description="DNS Sniffer Tool to capture DNS traffic.")
+    parser.add_argument("-i", "--interface", required=True, help="Network interface to sniff on (e.g., eth0, wlan0).")
+    
+    # Parse the arguments
+    args = parser.parse_args()
+
+    # Create sniffer object and start sniffing
+    sniffer = DNSSniffer(interface=args.interface)
+    sniffer.start_sniffing()
